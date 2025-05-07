@@ -1,0 +1,132 @@
+﻿@model List<dynamic>
+
+@{
+    ViewData["Title"] = "Task Form";
+}
+
+<h2>Task Form</h2>
+<div>
+    <input type="hidden" id="task_id" name="task_id" value="0"/>
+    <form id="taskForm">
+        <input type="text" id="task_name" class="form-control mb-2" placeholder="Task Name" />
+        <input type="date" id="task_sdate" class="form-control mb-2" />
+        <input type="date" id="task_edate" class="form-control mb-2" />
+        <input type="text" id="assigned_to" class="form-control mb-2" placeholder="Assigned To" />
+        <input type="number" step="0.01" id="total_cost" class="form-control mb-3" placeholder="Total Cost" />
+        <button type="button" id="saveBtn" class="btn btn-primary">Save Task</button>
+        <button type="button" id="showBtn" onclick="showTasks()" class="btn btn-primary">Show Task</button>
+
+    </form>
+</div>
+<div style="margin-top:5%">
+
+    <table style="width:100%;border-collapse:collapse;border:1px solid ">
+        <tr style="border:1px solid">
+            <th style="border:1px solid">S.No.</th>
+            <th style="display:none;">TaskID</th>
+            <th style="border:1px solid">TaskName</th>
+            <th style="border:1px solid">StartDate</th>
+            <th style="border:1px solid">EndDate</th>
+            <th style="border:1px solid">Assigned To</th>
+            <th style="border:1px solid">Total Cost</th>
+            <th style="border:1px solid">Edit</th>
+            <th style="border:1px solid">Delete</th>
+        </tr>
+        <tbody>
+
+            @{
+                int sno = 0;
+            }
+            @foreach (var task in Model)
+            {
+
+                sno++;
+                <tr style="border:1px solid black">
+                    <td style="border:1px solid">@sno</td>
+                    <td style="display:none;">@task.task_id</td>
+                    <td style="border:1px solid">@task.task_name</td>
+                    <td style="border:1px solid">@task.task_sdate.ToString("yyyy-MM-dd")</td>
+                    <td style="border:1px solid">@task.task_edate.ToString("yyyy-MM-dd")</td>
+                    <td style="border:1px solid">@task.assigned_to</td>
+                    <td style="border:1px solid">@task.total_cost</td>
+                    <td style="border:1px solid">
+                        <button class="btn btn-sm btn-warning" onclick="EditRecords(this,@task.task_id)">Edit</button>
+                    </td>
+                    <td style="border:1px solid">
+                        <button class="btn btn-sm btn-danger" onclick="DeleteRecords(this,@task.task_id)">Delete</button>
+                    </td>
+
+                </tr>
+            }
+
+        </tbody>
+    </table>
+
+</div>
+
+
+@section Scripts {
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        $(document).ready(function () {
+            $('#saveBtn').click(function (e) {
+                e.preventDefault();
+
+                const task = {
+                    task_id: parseInt(document.getElementById('task_id').value),
+                    task_name: $('#task_name').val(),
+                    task_sdate: $('#task_sdate').val(),
+                    task_edate: $('#task_edate').val(),
+                    assigned_to: $('#assigned_to').val(),
+                    total_cost: parseFloat($('#total_cost').val())
+                };
+
+                $.ajax({
+                    url: '/Task/SaveTask',
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify(task),
+                    success: function (res) {
+                        alert(res.message || 'Task saved!');
+                        $('#taskForm')[0].reset();
+                    },
+                    error: function (xhr) {
+                        console.error("Save error:", xhr.responseText);
+                        alert("Failed to save task.");
+                    }
+                });
+            });
+        });
+
+        function EditRecords(obj,rec) {
+
+            var tr = obj.closest('tr');
+            document.getElementById('task_name').value = tr.cells[2].innerText;
+            document.getElementById('task_id').value = tr.cells[1].innerText;
+            document.getElementById('task_sdate').value = tr.cells[3].innerText;
+            document.getElementById('task_edate').value = tr.cells[4].innerText;
+            document.getElementById('assigned_to').value = tr.cells[5].innerText;
+            document.getElementById('total_cost').value = tr.cells[6].innerText;
+
+        }
+
+        function DeleteRecords(obj,rec) {
+
+            var tr = obj.closest('tr');
+            var taskId = parseInt(tr.cells[1].innerText);
+            
+            $.ajax({
+
+                url: '/Task/DeleteTask',
+                data: JSON.stringify(taskId),
+                type: 'POST',
+                contentType: 'application/json',
+                success: function (result) {
+                    alert(result.message)
+                    return false;
+                }
+            });
+
+        }
+    </script>
+}
